@@ -1,31 +1,73 @@
-﻿using CommBank.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using CommBank.Models;
 using CommBank.Services;
 
-namespace CommBank.Tests.Fake;
-
-public class FakeUsersService : IUsersService
+namespace CommBank.Tests
 {
-    List<User> _users;
-    User _user;
+    public class FakeUsersService : IUsersService
+{
+    private readonly List<User> _users;
 
     public FakeUsersService(List<User> users, User user)
     {
         _users = users;
-        _user = user;
     }
 
-    public async Task<List<User>> GetAsync() =>
-        await Task.FromResult(_users);
+    public Task<User?> CreateAsync(User user)
+    {
+        _users.Add(user);
+        return Task.FromResult(user);
+    }
 
-    public async Task<User?> GetAsync(string id) =>
-        await Task.FromResult(_user);
+    public Task<List<User>> GetAsync()
+    {
+        return Task.FromResult(_users);
+    }
 
-    public async Task CreateAsync(User newUser) =>
-        await Task.FromResult(true);
+    public Task<User?> GetAsync(string id)
+    {
+        var user = _users.FirstOrDefault(u => u.Id == id);
+        return Task.FromResult(user);
+    }
 
-    public async Task UpdateAsync(string id, User updatedUser) =>
-        await Task.FromResult(true);
+    public Task<bool> RemoveAsync(string id)
+    {
+        var user = _users.FirstOrDefault(u => u.Id == id);
+        if (user != null)
+        {
+            _users.Remove(user);
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
+    }
 
-    public async Task RemoveAsync(string id) =>
-        await Task.FromResult(true);
+    public Task<User?> UpdateAsync(string id, User updatedUser)
+    {
+        var userIndex = _users.FindIndex(u => u.Id == id);
+        if (userIndex >= 0)
+        {
+            _users[userIndex] = updatedUser;
+            return Task.FromResult(updatedUser);
+        }
+        return Task.FromResult<User?>(null);
+    }
+
+        Task IUsersService.CreateAsync(User newUser)
+        {
+            return CreateAsync(newUser);
+        }
+
+        Task IUsersService.RemoveAsync(string id)
+        {
+            return RemoveAsync(id);
+        }
+
+        Task IUsersService.UpdateAsync(string id, User updatedUser)
+        {
+            return UpdateAsync(id, updatedUser);
+        }
+    }
+
 }
